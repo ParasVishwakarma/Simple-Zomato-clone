@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zomato Clone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100" style="background-image: url(img/bg.jpg);">
+
+<header>
+    <nav class="bg-gray-900 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a class="text-white text-2xl font-bold" href="index.html">Zomato</a>
+            <div class="space-x-4">
+                <a class="text-white hover:text-red-500" href="about.html">About</a>
+                <a class="text-white hover:text-red-500" href="service.html">Services</a>
+                <a class="text-white hover:text-red-500" href="conta.html">Contact</a>
+                <a class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600" href="login.html">Login</a>
+            </div>
+        </div>
+    </nav>
+</header>
+
+<div class="container mx-auto mt-6 text-center">
+    <input id="searchInput" class="border p-2 rounded w-2/3 sm:w-1/2" type="search" placeholder="Search...">
+    <button class="bg-red-500 text-white px-4 py-2 rounded ml-2 hover:bg-red-600" onclick="searchFood()">Search</button>
+</div>
+
+<div class="container mx-auto mt-6">
+    <h2 class="text-center text-3xl font-bold text-yellow-400">Zomato Food Menu</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4" id="foodMenu"></div>
+</div>
+
+<div class="container mx-auto mt-6 p-4 bg-white rounded shadow fade-in">
+    <h3 class="text-xl font-bold">🛒 Your Cart</h3>
+    <ul id="cartList" class="list-disc pl-4"></ul>
+    <h4 class="mt-2">Total: ₹<span id="totalPrice">0</span></h4>
+    <button class="bg-green-500 text-white px-4 py-2 rounded mt-2 hover:bg-green-600" onclick="checkout()">Buy Now</button>
+    <button class="bg-red-600 text-white px-4 py-2 rounded mt-2 hover:bg-red-700" onclick="clearCart()">Clear Cart</button>
+</div>
+
+<div class="container mx-auto mt-6 p-4 bg-white rounded shadow hidden fade-in" id="customerInfo">
+    <h3 class="text-xl font-bold">Customer Information</h3>
+    <form>
+        <input type="text" class="border p-2 w-full mt-2" id="customerName" placeholder="Name">
+        <input type="text" class="border p-2 w-full mt-2" id="customerAddress" placeholder="Address">
+        <select class="border p-2 w-full mt-2" id="paymentMethod">
+            <option>Credit Card</option>
+            <option>Debit Card</option>
+            <option>UPI</option>
+            <option>Cash on Delivery</option>
+        </select>
+        <button type="button" class="bg-blue-500 text-white px-4 py-2 rounded mt-2 hover:bg-blue-600" onclick="processPayment()">Confirm Order</button>
+    </form>
+</div>
+
+<script>
+    const foodItems = [
+    { id: 1, name: "Burger", price: 120, image: "img/bur.jpg" },
+    { id: 2, name: "Pizza", price: 250, image: "img/pizaa.jpg" },
+    { id: 3, name: "Pasta", price: 180, image: "img/psta.jpg" },
+    { id: 4, name: "Fries", price: 100, image: "img/fries.jpg" },
+    { id: 5, name: "Sandwich", price: 150, image: "img/sandwich.jpg" },
+    { id: 6, name: "Salad", price: 130, image: "img/salad.jpg" },
+    { id: 7, name: "Tacos", price: 200, image: "img/tacos.jpg" },
+    { id: 8, name: "Sushi", price: 300, image: "img/sushi.jpg" },
+    { id: 9, name: "Noodles", price: 170, image: "img/noodles.jpg" },
+    { id: 10, name: "Ice Cream", price: 90, image: "img/icecream.jpg" },
+    { id: 11, name: "Hot Dog", price: 140, image: "img/hotdog.jpg" },
+    { id: 12, name: "Doughnut", price: 110, image: "img/doughnut.jpg" }
+];
+
+    let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+    function loadMenu(items = foodItems) {
+        const menu = document.getElementById("foodMenu");
+        menu.innerHTML = "";
+        items.forEach(item => {
+            menu.innerHTML += `
+                <div class="bg-white p-4 rounded shadow text-center fade-in">
+                    <img src="${item.image}" class="w-full h-32 object-cover" alt="${item.name}">
+                    <h5 class="text-lg font-bold">${item.name}</h5>
+                    <p class="text-gray-600">₹${item.price}</p>
+                    <button class="bg-green-500 text-white px-4 py-2 rounded mt-2 hover:bg-green-600" onclick="addToCart(${item.id})">Add to Cart</button>
+                </div>
+            `;
+        });
+    }
+
+    function searchFood() {
+        const query = document.getElementById("searchInput").value.toLowerCase();
+        const filteredItems = foodItems.filter(item => item.name.toLowerCase().includes(query));
+        document.getElementById("foodMenu").innerHTML = filteredItems.length ? "" : "<p class='text-center text-red-500'>No items found.</p>";
+        loadMenu(filteredItems);
+    }
+
+    function addToCart(itemId) {
+        const item = foodItems.find(food => food.id === itemId);
+        cart.push(item);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateCart();
+    }
+
+    function updateCart() {
+        document.getElementById("cartList").innerHTML = cart.map((item, index) => 
+            `<li class="flex justify-between">${item.name} - ₹${item.price}
+                <button class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600" onclick="removeFromCart(${index})">Remove</button>
+            </li>`).join("");
+        document.getElementById("totalPrice").innerText = cart.reduce((sum, item) => sum + item.price, 0);
+    }
+
+    function removeFromCart(index) {
+        cart.splice(index, 1);
+        localStorage.setItem("cart", JSON.stringify(cart));
+        updateCart();
+    }
+
+    function clearCart() {
+        cart = [];
+        localStorage.removeItem("cart");
+        updateCart();
+    }
+
+    function checkout() {
+        document.getElementById("customerInfo").classList.remove("hidden");
+    }
+
+    function processPayment() {
+        alert("Order placed successfully!");
+        clearCart();
+        document.getElementById("customerInfo").classList.add("hidden");
+    }
+
+    window.onload = () => {
+        loadMenu();
+        updateCart();
+    };
+</script>
+</body>
+</html>
